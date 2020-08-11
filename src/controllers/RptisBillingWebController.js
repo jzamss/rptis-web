@@ -9,7 +9,10 @@ import {
   Spacer,
   Service,
   Error,
-  Loading
+  Title,
+  Loading,
+  Page,
+  BackLink
 } from 'rsi-react-web-components'
 
 import { EPayment, EmailVerification } from 'rsi-react-filipizen-components'
@@ -24,7 +27,7 @@ const RptisBillingWebController = (props) => {
   const [error, setError] = useState()
   const [loading, setLoading] = useState(false)
   const [refno, setRefno] = useState()
-  const [contact, setContact] = useState({})
+  const [contact, setContact] = useState()
   const [showPayOption, setShowPayOption] = useState(false)
   const [bill, setBill] = useState()
   const [po, setPo] = useState()
@@ -39,7 +42,7 @@ const RptisBillingWebController = (props) => {
   }
 
   const getBill = async (billOptions = {}) => {
-    const svc = await Service.lookup(`${partner.id}:EPaymentService`)
+    const svc = await Service.lookupAsync(`${partner.id}:EPaymentService`)
     const params = { txntype, refno, ...billOptions }
     return await svc.getBilling(params)
   }
@@ -73,20 +76,28 @@ const RptisBillingWebController = (props) => {
     setShowPayOption(false)
   }
 
+  const showCheckout = () => {
+    setMode("checkout");
+  }
+
   const printBill = () => {
     window.print()
   }
 
   const createPaymentOrder = () => {
     const createPo = async () => {
-      const svc = await Service.lookup(`${partner.id}:EPaymentService`)
+      const svc = await Service.lookupAsync(`${partner.id}:EPaymentService`)
       return svc.createPaymentOrder({
         refno,
         txntype,
         origin,
         orgcode: partner.id,
         billtoyear: bill.billtoyear,
-        billtoqtr: bill.billtoqtr
+        billtoqtr: bill.billtoqtr,
+        paidby: bill.paidby,
+        paidbyaddress: bill.paidbyaddress,
+        email: contact.email,
+        mobileno: contact.mobileno,
       })
     }
 
@@ -115,8 +126,9 @@ const RptisBillingWebController = (props) => {
   }
 
   return (
-    <React.Fragment>
-      <Panel visible={mode === 'initial'} style={{ maxWidth: 400 }}>
+    <Page>
+      <Title labelStyle={styles.subtitle}>Realty Tax Online Billing</Title>
+      <Panel visibleWhen={mode === 'initial'} style={{ maxWidth: 400 }}>
         <Label labelStyle={styles.subtitle}>Initial Information</Label>
         <Spacer />
         <Error msg={error} />
@@ -137,11 +149,11 @@ const RptisBillingWebController = (props) => {
         </ActionBar>
       </Panel>
 
-      <Panel visible={mode === 'viewbill'} style={{ maxWidth: 450 }}>
+      <Panel visibleWhen={mode === 'viewbill'} style={{ maxWidth: 450 }}>
         <Label labelStyle={styles.subtitle}>Billing Information</Label>
         <Spacer />
         <Error msg={error} />
-        <Loading visible={loading} />
+        {/* <Loading visible={loading} /> */}
         <FormPanel context={bill} handler={setBill}>
           <Text name='billno' caption='Bill No.' readOnly />
           <Text name='billdate' caption='Bill Date' readOnly />
@@ -156,7 +168,7 @@ const RptisBillingWebController = (props) => {
           <Button caption='Back' onClick={() => props.onBack()} />
           <Button caption='Print' onClick={printBill} />
           <Button caption='Pay Option' onClick={showPayOptionHandler} />
-          <Button caption='Proceed for Payment' onClick={createPaymentOrder} />
+          <Button caption='Confirm Payment' onClick={showCheckout} />
         </ActionBar>
 
         <PayOption
@@ -171,7 +183,31 @@ const RptisBillingWebController = (props) => {
           onCancel={cancelPayOptionHandler}
         />
       </Panel>
-    </React.Fragment>
+
+      <Panel visibleWhen={mode === 'checkout'} style={{ maxWidth: 450 }}>
+        <Label labelStyle={styles.subtitle}>Payment Checkout Confirmation</Label>
+        <Spacer />
+        <FormPanel context={bill} handler={setBill}>
+          <Panel row>
+            <Text name='billno' caption='Bill No.' readOnly />
+            <Text name='billdate' caption='Bill Date' readOnly />
+          </Panel>
+          <Panel row>
+            <Text name='tdno' caption='TD No.' readOnly />
+            <Text name='fullpin' caption='PIN' readOnly />
+          </Panel>
+          <Text name='billperiod' caption='Bill Period' readOnly />
+          <Text name='amount' caption='Amount Due' readOnly />
+          <Spacer />
+          <Text name='paidby' caption='Paid By' />
+          <Text name='paidbyaddress' caption='Address' />
+        </FormPanel>
+        <ActionBar disabled={loading}>
+          <Button caption='Back' onClick={() => setMode("viewbill")} />
+          <Button caption='Proceed for Payment' onClick={createPaymentOrder} />
+        </ActionBar>
+      </Panel>
+    </Page>
   )
 }
 
