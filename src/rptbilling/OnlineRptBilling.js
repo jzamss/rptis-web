@@ -10,8 +10,7 @@ import {
   Service,
   Error,
   Title,
-  Loading,
-  Page,
+  Decimal,
   BackLink
 } from 'rsi-react-web-components'
 
@@ -42,7 +41,6 @@ const OnlineRptBilling = (props) => {
   const loadBill = (billOptions = {}) => {
     setLoading(true);
     setError(null);
-
     getBilling(billOptions).then(bill => {
       setBill(bill.info);
       setBarcode(`56001:${bill.info.billno}`);
@@ -54,17 +52,9 @@ const OnlineRptBilling = (props) => {
     })
   }
 
-  const showPayOptionHandler = () => {
-    setShowPayOption(true)
-  }
-
   const payOptionHandler = (billOption) => {
     setShowPayOption(false)
     loadBill(billOption)
-  }
-
-  const cancelPayOptionHandler = () => {
-    setShowPayOption(false)
   }
 
   const printBill = () => {
@@ -93,7 +83,14 @@ const OnlineRptBilling = (props) => {
         <Label labelStyle={styles.subtitle}>Initial Information</Label>
         <Spacer />
         <Error msg={error} />
-        <Text caption='Tax Declaration No.' name='refno' value={refno} onChange={setRefno} readOnly={loading} />
+        <Text
+          caption='Tax Declaration No.'
+          name='refno'
+          value={refno}
+          onChange={setRefno}
+          readOnly={loading}
+          autoFocus={true}
+        />
         <ActionBar>
           <Button caption='Back' variant="text" action={onCancel} />
           <Button caption='Next' action={loadBill} loading={loading} disabled={loading} />
@@ -113,25 +110,28 @@ const OnlineRptBilling = (props) => {
           <Text name='taxpayer.name' caption='Property Owner' readOnly />
           <Text name='taxpayer.address' caption='Owner Address' readOnly />
           <Text name='billperiod' caption='Bill Period' readOnly />
-          <Text name='amount' caption='Amount Due' readOnly />
+          <Decimal name='amount' caption='Amount Due' readOnly textAlign="left" />
         </FormPanel>
         <ActionBar disabled={loading}>
-          <Button caption='Back' action={() => props.onBack()} />
-          <Button caption='Print' action={printBill} />
-          <Button caption='Pay Option' action={showPayOptionHandler} />
-          <Button caption='Confirm Payment' action={confirmPayment} />
+          <BackLink caption='Back' action={() => props.onBack()} />
+          <Panel row>
+            <Button caption='Print' action={printBill} variant="outlined" />
+            <Button caption='Pay Option' action={() => setShowPayOption(true)} variant="outlined" />
+            <Button caption='Confirm Payment' action={confirmPayment} />
+          </Panel>
         </ActionBar>
 
         <PayOption
           initialValue={
             bill && {
               billtoyear: bill.billtoyear,
-              billtoqtr: bill.billtoqtr
+              billtoqtr: bill.billtoqtr,
+              fromyear: bill.fromyear,
             }
           }
           open={showPayOption}
           onAccept={payOptionHandler}
-          onCancel={cancelPayOptionHandler}
+          onCancel={() => setShowPayOption(false)}
         />
       </Panel>
     </React.Fragment>

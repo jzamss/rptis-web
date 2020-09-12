@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 import { EPayment } from 'rsi-react-filipizen-components'
 import OnlineRptBilling from './OnlineRptBilling'
