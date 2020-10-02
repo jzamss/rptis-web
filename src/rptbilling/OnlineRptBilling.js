@@ -25,15 +25,15 @@ const OnlineRptBilling = (props) => {
   const [loading, setLoading] = useState(false)
   const [refno, setRefno] = useState()
   const [showPayOption, setShowPayOption] = useState(false)
-  const [bill, setBill] = useState()
+  const [bill, setBill] = useState({})
   const [year, setYear] = useState()
   const [qtr, setQtr] = useState()
   const [barcode, setBarcode] = useState()
 
-  const { partner, page, onCancel, onSubmit } = props
+  const { partner, page, contact={}, onCancel, onSubmit } = props
 
   const getBilling = async (billOptions = {}) => {
-    const svc = await Service.lookupAsync(`${partner.id}:EPaymentService`)
+    const svc = await Service.lookupAsync(`${partner.id}:OnlineLandTaxBillingService`)
     const params = { txntype, refno, ...billOptions }
     return await svc.getBilling(params)
   }
@@ -43,7 +43,7 @@ const OnlineRptBilling = (props) => {
     setError(null);
     getBilling(billOptions).then(bill => {
       setBill(bill.info);
-      setBarcode(`56001:${bill.info.billno}`);
+      setBarcode(bill.info.billno);
       setMode('viewbill');
       setLoading(false)
     }).catch(err => {
@@ -62,6 +62,10 @@ const OnlineRptBilling = (props) => {
   }
 
   const confirmPayment = () => {
+    const po = { ...bill, barcode };
+    const items = po.items;
+    delete po.items;
+
     onSubmit({
       refno,
       txntype,
@@ -72,9 +76,13 @@ const OnlineRptBilling = (props) => {
       paidby: bill.paidby,
       paidbyaddress: bill.paidbyaddress,
       amount: bill.amount,
-      paymentdetails: `Real Property TD No. ${bill.tdno} ${bill.billperiod}`,
+      particulars: `Real Property TD No. ${bill.tdno} ${bill.billperiod}`,
+      items: items,
+      info: {data: po},
     })
   }
+
+  const blur = contact.email !== bill.email;
 
   return (
     <React.Fragment>
@@ -101,14 +109,13 @@ const OnlineRptBilling = (props) => {
         <Label labelStyle={styles.subtitle}>Billing Information</Label>
         <Spacer />
         <Error msg={error} />
-        {/* <Loading visible={loading} /> */}
         <FormPanel context={bill} handler={setBill}>
           <Text name='billno' caption='Bill No.' readOnly />
           <Text name='billdate' caption='Bill Date' readOnly />
           <Text name='tdno' caption='TD No.' readOnly />
           <Text name='fullpin' caption='PIN' readOnly />
-          <Text name='taxpayer.name' caption='Property Owner' readOnly />
-          <Text name='taxpayer.address' caption='Owner Address' readOnly />
+          <Text name='taxpayer.name' caption='Property Owner' readOnly blur={blur} />
+          <Text name='taxpayer.address' caption='Owner Address' readOnly blur={blur} />
           <Text name='billperiod' caption='Bill Period' readOnly />
           <Decimal name='amount' caption='Amount Due' readOnly textAlign="left" />
         </FormPanel>

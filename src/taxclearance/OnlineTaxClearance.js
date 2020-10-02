@@ -23,10 +23,10 @@ const OnlineTaxClearance = (props) => {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   //TODO: REMOVE TEST
-  const [refno, setRefno] = useState("L-0001")
-  const [purpose, setPurpose] = useState("LOAN")
-  // const [refno, setRefno] = useState()
-  // const [purpose, setPurpose] = useState()
+  // const [refno, setRefno] = useState("L-0001")
+  // const [purpose, setPurpose] = useState("LOAN")
+  const [refno, setRefno] = useState()
+  const [purpose, setPurpose] = useState()
   const [clearance, setClearance] = useState({})
 
   const { partner, page, onCancel, onSubmit } = props
